@@ -154,3 +154,29 @@ per-app locales crash on startup. This is the fork's open issue #37.
   Google app) added to the GOOGLE_APP install set — the Gemini guest
   renders but dead-ends on "Download or enable the Google app" without
   it (on-device screenshot, 2026-10-23).
+
+## DualClone patch — Instagram guest crash (2026-10-24, from a fresh on-device DualClone engine log, moto g54 5G / Android 13)
+
+Two crashes killed the Instagram guest ~2s after launch, after the feed
+had rendered in an earlier session:
+
+1. `fake/service/IPackageManagerProxy.java`, `QueryBroadcastReceivers.hook`:
+   the engine's own debug line stringified the returned ResolveInfo list.
+   `ResolveInfo.toString()` calls `getComponentInfo()`, which THROWS
+   `IllegalStateException: Missing ComponentInfo!` when an entry has no
+   activity/service/provider info — and that exception escaped on
+   Instagram's `firebase-iid-executor` thread, killing the whole guest
+   process. Fix: never stringify the list (log the count only), and drop
+   entries with no component info before returning — such an entry can
+   never be delivered to, and guests legitimately toString() results.
+2. `app/BActivityThread.java`, guest `handleBindApplication`: this method
+   overwrites the REAL process bind data (`appInfo`, `providers`) with
+   the guest's while Android's own `handleBindApplication` is still on
+   the stack. A null guest ApplicationInfo, or null/incomplete entries in
+   the guest provider array, then makes the system bind step die with
+   `NullPointerException: PackageItemInfo.metaData on a null object`
+   (observed twice, in `:p0`, 12:02:39 and 12:03:12 PKT). Fix: refuse to
+   overwrite when the guest PackageInfo/ApplicationInfo is null, and
+   hand over only non-null, named providers for THIS guest (the provider
+   list is now cleared per bind instead of accumulating other guests'
+   providers in the same process).

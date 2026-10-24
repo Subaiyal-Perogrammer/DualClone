@@ -364,11 +364,29 @@ public class BActivityThread extends IBActivityThread.Stub {
         }
 
         PackageInfo packageInfo = BlackBoxCore.getBPackageManager().getPackageInfo(packageName, PackageManager.GET_PROVIDERS, BActivityThread.getUserId());
+        // DualClone patch (2026-10-24, Instagram guest crash): the code below
+        // overwrites the REAL process bind data (appInfo + providers) with the
+        // guest's, while Android's own handleBindApplication is still on the
+        // stack. If the guest's ApplicationInfo is null, or its provider array
+        // carries null/incomplete entries, the system bind step then dies with
+        // NPE ("PackageItemInfo.metaData on a null object") ~2s after launch
+        // and the guest window vanishes. Refuse to overwrite with nulls, and
+        // hand over only clean providers for THIS guest (never accumulate
+        // other guests' providers in this process).
+        if (packageInfo == null || packageInfo.applicationInfo == null) {
+            Slog.e(TAG, "DualClone patch: guest PackageInfo/applicationInfo null for " + packageName + " — refusing to overwrite the real bind data");
+            return;
+        }
         ApplicationInfo applicationInfo = packageInfo.applicationInfo;
         if (packageInfo.providers == null) {
             packageInfo.providers = new ProviderInfo[]{};
         }
-        mProviders.addAll(Arrays.asList(packageInfo.providers));
+        mProviders.clear();
+        for (ProviderInfo provider : packageInfo.providers) {
+            if (provider != null && provider.name != null) {
+                mProviders.add(provider);
+            }
+        }
 
         Object boundApplication = BRActivityThread.get(BlackBoxCore.mainThread()).mBoundApplication();
 

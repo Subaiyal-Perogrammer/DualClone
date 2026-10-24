@@ -314,7 +314,21 @@ public class IPackageManagerProxy extends BinderInvocationStub {
             String type = MethodParameterUtils.getFirstParam(args, String.class);
             Integer flags = MethodParameterUtils.getFirstParam(args, Integer.class);
             List<ResolveInfo> resolves = BlackBoxCore.getBPackageManager().queryBroadcastReceivers(intent, flags, type, BActivityThread.getUserId());
-            Slog.d(TAG, "queryIntentReceivers: " + resolves);
+            // DualClone patch (2026-10-24, Instagram guest crash): NEVER stringify
+            // this list. ResolveInfo.toString() calls getComponentInfo(), which
+            // throws IllegalStateException ("Missing ComponentInfo!") when an
+            // entry has no activity/service/provider info — that exception
+            // killed Instagram's firebase-iid-executor thread and took the
+            // whole guest process down with it. Drop such entries outright:
+            // guests legitimately toString() query results, and an entry with
+            // no component can never be delivered to anyway.
+            if (resolves != null) {
+                resolves.removeIf(r -> r == null
+                        || (r.activityInfo == null && r.serviceInfo == null && r.providerInfo == null));
+                Slog.d(TAG, "queryIntentReceivers: " + resolves.size() + " entries");
+            } else {
+                Slog.d(TAG, "queryIntentReceivers: null");
+            }
 
             
             if (BuildCompat.isN()) {
