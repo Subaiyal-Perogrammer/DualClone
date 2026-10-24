@@ -35,7 +35,18 @@ object EngineLog {
 
     /** Call once per process so entries persist to the shared file. */
     fun init(context: Context) {
-        if (logFile == null) logFile = File(context.filesDir, "engine-log.txt")
+        initFile(context)
+    }
+
+    /**
+     * Point the log file at filesDir as early as attachBaseContext, so
+     * startup lines survive even if Application.onCreate never runs
+     * (a hung engine step used to leave no file trace at all).
+     * Never throws: logging must never crash startup.
+     */
+    fun initFile(context: Context) {
+        try { if (logFile == null) logFile = File(context.filesDir, "engine-log.txt") }
+        catch (e: Exception) { /* in-memory buffer still works */ }
     }
 
     @Synchronized
@@ -107,7 +118,7 @@ object EngineLog {
     fun fullReport(context: Context): String = buildString {
         appendLine("=== DualClone engine log ===")
         appendLine("App: ${context.packageName}")
-        appendLine("Build: DualClone 1.0.1 (branch fresh-app, watermark edition)")
+        appendLine("Build: DualClone 1.0.2 (branch fresh-app, safe-start edition)")
         appendLine("Owner: Subaiyal")
         appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
         appendLine("Device: ${Build.BRAND} ${Build.MODEL} (${Build.MANUFACTURER})")
