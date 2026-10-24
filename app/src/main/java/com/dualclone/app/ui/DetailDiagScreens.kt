@@ -190,6 +190,8 @@ fun SettingsScreen(vm: AppViewModel, onOpenLog: () -> Unit) {
                     Text("DualClone 1.0.0 — a fresh app shell on the ${CloneEngine.ENGINE_NAME} virtualization engine (vendored source, Apache-2.0). Clones are isolated per virtual user; the original apps are never launched as a fallback.")
                     Spacer(Modifier.height(6.dp))
                     Text("DualClone stores clone data only on this device.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Owner: Subaiyal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }

@@ -64,7 +64,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -216,48 +218,61 @@ fun AppIcon(packageName: String, size: Int = 56) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeGrid(clones: List<CloneRecord>, onOpen: (CloneRecord) -> Unit, onDetail: (CloneRecord) -> Unit) {
-    if (clones.isEmpty()) {
-        Column(
-            Modifier.fillMaxSize().padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(Icons.Filled.Apps, contentDescription = null, Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(16.dp))
-            Text("No clones yet", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
+    Box(Modifier.fillMaxSize()) {
+        // Owner watermark: the owner's name, faint, behind everything on Home.
+        // "Subaiyal" is the watermark only — it is NOT the app name.
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                "Tap + to clone an installed app. Each clone runs in its own isolated space with its own data and login.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                "Subaiyal",
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.055f),
+                modifier = Modifier.graphicsLayer { rotationZ = -18f }
             )
         }
-        return
-    }
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(clones, key = { it.id }) { record ->
+        if (clones.isEmpty()) {
             Column(
+                Modifier.fillMaxSize().padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.combinedClickable(
-                    onClick = { onOpen(record) },
-                    onLongClick = { onDetail(record) }
-                )
+                verticalArrangement = Arrangement.Center
             ) {
-                AppIcon(record.packageName, 60)
-                Spacer(Modifier.height(6.dp))
+                Icon(Icons.Filled.Apps, contentDescription = null, Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(16.dp))
+                Text("No clones yet", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    record.displayName,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    "Tap + to clone an installed app. Each clone runs in its own isolated space with its own data and login.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+            }
+            return@Box
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(clones, key = { it.id }) { record ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.combinedClickable(
+                        onClick = { onOpen(record) },
+                        onLongClick = { onDetail(record) }
+                    )
+                ) {
+                    AppIcon(record.packageName, 60)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        record.displayName,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }

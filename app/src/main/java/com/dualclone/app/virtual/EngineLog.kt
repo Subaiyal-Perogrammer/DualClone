@@ -107,6 +107,8 @@ object EngineLog {
     fun fullReport(context: Context): String = buildString {
         appendLine("=== DualClone engine log ===")
         appendLine("App: ${context.packageName}")
+        appendLine("Build: DualClone 1.0.1 (branch fresh-app, watermark edition)")
+        appendLine("Owner: Subaiyal")
         appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
         appendLine("Device: ${Build.BRAND} ${Build.MODEL} (${Build.MANUFACTURER})")
         appendLine("ABI: ${Build.SUPPORTED_ABIS.joinToString()}")
